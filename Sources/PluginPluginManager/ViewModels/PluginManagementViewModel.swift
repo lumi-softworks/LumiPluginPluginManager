@@ -71,6 +71,20 @@ final class PluginManagementViewModel: ObservableObject {
         plugins.reduce(0) { $0 + ($1.isEnabled ? 1 : 0) }
     }
 
+    /// 搜索、状态筛选或分类筛选中是否有任一处于激活状态。
+    var hasActiveFilters: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || selectedCategory != nil
+            || statusFilter != .all
+    }
+
+    /// 一次性清空搜索与全部筛选条件。
+    func resetFilters() {
+        searchText = ""
+        selectedCategory = nil
+        statusFilter = .all
+    }
+
     // MARK: - 搜索框显隐
 
     /// 搜索框的显示阈值：可配置插件数量达到该值才显示搜索框。
@@ -168,5 +182,10 @@ final class PluginManagementViewModel: ObservableObject {
 
     func aboutEntry(for pluginID: String) -> DocsEntry? {
         docsCapability.aboutEntry(for: pluginID)
+    }
+
+    /// 该插件的 About 是否为插件管理器生成的兜底页。
+    func isDefaultAbout(pluginID: String) -> Bool {
+        docsCapability.isDefaultAbout(pluginID: pluginID)
     }
 }

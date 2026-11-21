@@ -1,7 +1,7 @@
 import Foundation
 
 /// 插件管理列表的启用状态筛选条件。
-enum PluginManagementFilter: CaseIterable {
+enum PluginManagementFilter: CaseIterable, Hashable {
     /// 不过滤启用状态。
     case all
     /// 仅展示已启用的插件。

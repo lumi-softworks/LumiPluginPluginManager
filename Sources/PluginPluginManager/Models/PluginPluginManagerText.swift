@@ -22,13 +22,31 @@ enum PluginPluginManagerText {
     static let disabled = "已禁用"
     static let disabledPermanently = "已停用"
     static let enabled = "已启用"
+    static let defaultEnabled = "默认启用"
+    static let defaultDisabled = "默认停用"
     static let noDetailsProvided = "无详细信息"
     static let noDetailsHint = "插件作者未提供详情视图。"
     static let enable = "启用"
+    static let disable = "停用"
     static let disableAll = "停用所有"
     static let disablingAll = "停用中…"
 
+    // iOS 列表页
+    static let statusFilterLabel = "状态"
+    static let categoryFilterLabel = "分类"
+    static let clearFilters = "清除筛选"
+    static let pluginsSummary = "%lld 个插件 · %lld 个已启用"
+    static let noPluginsFilteredHint = "调整搜索或筛选条件后再试。"
+    static let moreActions = "更多操作"
+    static let disableAllConfirmationTitle = "停用所有插件？"
+    static let disableAllConfirmationMessage = "所有插件将立即停用，你可以随时重新启用它们。"
+    static let cancel = "取消"
+    static let errorTitle = "操作失败"
+    static let okButton = "好"
+
     // 详情面板信息区
+    static let informationSectionTitle = "信息"
+    static let aboutSectionTitle = "关于"
     static let categoryLabel = "分类"
     static let versionLabel = "版本"
     static let policyLabel = "策略"
@@ -119,6 +137,34 @@ extension PluginStage {
         case .preview: "预览"
         case .stable: "稳定"
         case .deprecated: "已弃用"
+        }
+    }
+}
+
+extension PluginEnablePolicy {
+    /// 策略面向用户的展示文案；可配置策略需要结合当前启停状态。
+    func displayName(isEnabled: Bool) -> String {
+        switch self {
+        case .required, .alwaysOn:
+            PluginPluginManagerText.alwaysOn
+        case .disabled:
+            PluginPluginManagerText.disabledPermanently
+        case .enabledByDefault, .disabledByDefault:
+            isEnabled ? PluginPluginManagerText.enabled : PluginPluginManagerText.disabled
+        }
+    }
+
+    /// 策略本身的含义，不随当前启停状态变化（详情页信息区使用）。
+    var policyName: String {
+        switch self {
+        case .required, .alwaysOn:
+            PluginPluginManagerText.alwaysOn
+        case .disabled:
+            PluginPluginManagerText.disabledPermanently
+        case .enabledByDefault:
+            PluginPluginManagerText.defaultEnabled
+        case .disabledByDefault:
+            PluginPluginManagerText.defaultDisabled
         }
     }
 }

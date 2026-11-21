@@ -141,7 +141,12 @@ public final class PluginPluginManager: SuperPlugin, SuperLog {
         let capability = PluginManagementCapabilityAdapter(manager: manager)
         let viewModel = PluginManagementViewModel(
             capability: capability,
-            docsCapability: PluginManagerDocsCapabilityAdapter(docs: docsProvider)
+            docsCapability: PluginManagerDocsCapabilityAdapter(
+                docs: docsProvider,
+                isDefaultAbout: { [weak self] pluginID in
+                    self?.generatedAboutPluginIDs.contains(pluginID) ?? false
+                }
+            )
         )
         observer?.cancel()
         observer = PluginManagementObserver(

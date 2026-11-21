@@ -70,13 +70,6 @@ struct PluginDefaultAboutView: View {
     }
 
     private var policyValue: String {
-        switch metadata.policy {
-        case .required, .alwaysOn:
-            PluginPluginManagerText.alwaysOn
-        case .disabled:
-            PluginPluginManagerText.disabledPermanently
-        case .enabledByDefault, .disabledByDefault:
-            isEnabled ? PluginPluginManagerText.enabled : PluginPluginManagerText.disabled
-        }
+        metadata.policy.displayName(isEnabled: isEnabled)
     }
 }

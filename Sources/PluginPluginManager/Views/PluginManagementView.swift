@@ -6,84 +6,32 @@ import SwiftUI
 /// View 只依赖 `PluginManagementViewModel`；插件列表、筛选、选中项、详情和启停
 /// 状态均由 VM 提供，外部插件事件由 `PluginManagementObserver` 写回 VM。
 ///
-/// 布局按宽度分两态：
-/// - 常规宽度：左侧列表 + 右侧详情的分栏布局（macOS 与 iPad）。
-/// - 紧凑宽度（iPhone）：改为列表 + `NavigationLink` 推入详情，避免分栏在
-///   窄屏下互相挤压。
+/// - iOS（iPhone / iPad）：交给 `PluginManagementIOSView`，使用系统分组列表、
+///   导航栏搜索与原生工具栏，贴合 iOS 设置页的交互习惯。
+/// - macOS：左侧列表 + 右侧详情的分栏布局。
 struct PluginManagementView: View {
     @LumiTheme private var theme
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @ObservedObject private var viewModel: PluginManagementViewModel
 
     init(viewModel: PluginManagementViewModel) {
         self.viewModel = viewModel
     }
 
-    private var isCompact: Bool {
-        horizontalSizeClass == .compact
-    }
-
     var body: some View {
-        Group {
-            if isCompact {
-                compactBody
-            } else {
-                regularBody
+        #if os(iOS)
+        PluginManagementIOSView(viewModel: viewModel)
+        #else
+        regularBody
+            .onAppear {
+                viewModel.normalizeSelection()
             }
-        }
-        .onAppear {
-            viewModel.normalizeSelection()
-        }
-        .onChange(of: viewModel.filteredPlugins.map(\.id)) { _, _ in
-            viewModel.normalizeSelection()
-        }
+            .onChange(of: viewModel.filteredPlugins.map(\.id)) { _, _ in
+                viewModel.normalizeSelection()
+            }
+        #endif
     }
 
-    // MARK: - 紧凑布局（iPhone）
-
-    private var compactBody: some View {
-        AppSettingsContentScaffold(maxContentWidth: nil) {
-            VStack(alignment: .leading, spacing: 14) {
-                toolbar
-                errorBanner
-
-                LazyVStack(spacing: 4) {
-                    ForEach(viewModel.filteredPlugins) { plugin in
-                        NavigationLink {
-                            PluginSettingsDetailView(viewModel: viewModel)
-                                .onAppear { viewModel.selectPlugin(id: plugin.id) }
-                                .navigationTitle(plugin.metadata.name)
-#if os(iOS)
-                                .navigationBarTitleDisplayMode(.inline)
-#endif
-                        } label: {
-                            PluginListRow(
-                                plugin: plugin,
-                                isSelected: viewModel.selectedPlugin?.id == plugin.id
-                            ) {
-                                viewModel.selectPlugin(id: plugin.id)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 9)
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    if viewModel.filteredPlugins.isEmpty {
-                        AppEmptyState(
-                            icon: "magnifyingglass",
-                            title: PluginPluginManagerText.noPluginsFound
-                        )
-                        .padding(.vertical, 32)
-                        .accessibilityIdentifier("plugin-management.empty")
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - 分栏布局（macOS / iPad）
+    // MARK: - 分栏布局（macOS）
 
     private var regularBody: some View {
         AppSettingsContentScaffold(scrollsContent: false, maxContentWidth: nil) {
@@ -143,28 +91,7 @@ struct PluginManagementView: View {
         .environment(\.appSettingsCardStyleOverride, .subtle)
     }
 
-    // MARK: - 头部与错误提示
-
-    private var toolbar: some View {
-        HStack(spacing: 10) {
-            PluginManagementHeader(
-                totalCount: viewModel.plugins.count,
-                enabledCount: viewModel.enabledCount
-            )
-            Spacer()
-            AppButton(
-                viewModel.isDisablingAll
-                    ? PluginPluginManagerText.disablingAll
-                    : PluginPluginManagerText.disableAll,
-                systemImage: "xmark.circle",
-                style: .secondary,
-                size: .small
-            ) {
-                viewModel.disableAllPlugins()
-            }
-            .disabled(viewModel.isDisablingAll || viewModel.enabledCount == 0)
-        }
-    }
+    // MARK: - 错误提示
 
     @ViewBuilder
     private var errorBanner: some View {
